@@ -24,7 +24,7 @@ After running the program, you will be presented with a menu of options:
 
 ## Program Flowchart
 
-<img src="./budget_tracker.png"/>
+<img src="./budget_tracker.png"/> 
 
 ## Class Diagram
 
