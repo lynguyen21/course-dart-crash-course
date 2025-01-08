@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:json/json.dart';
 
 enum Category {
   food,
@@ -16,7 +15,6 @@ enum Category {
   other,
 }
 
-@JsonCodable()
 class Transaction {
   DateTime date;
   double amount;
@@ -40,7 +38,6 @@ class Transaction {
   }
 }
 
-@JsonCodable()
 class Account {
   String name;
   int accountNumber;
