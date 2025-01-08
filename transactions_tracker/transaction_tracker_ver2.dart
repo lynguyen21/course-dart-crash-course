@@ -25,7 +25,8 @@ class Account {
   List<Transaction> income;
   List<Transaction> expense;
   double expenseLimit; // New field for expense limits
-  List<Transaction> recurringTransactions; // New field for recurring transactions
+  List<Transaction>
+  recurringTransactions; // New field for recurring transactions
 
   Account({
     this.name = 'None',
@@ -85,13 +86,14 @@ void printMenu() {
 
 void main() {
   Account account1 = Account(
-      name: "Giang",
-      accountNumber: 1234567,
-      balance: 2000.00,
-      income: [],
-      expense: [],
-      expenseLimit: 500.00, // Setting a default limit
-      recurringTransactions: []);
+    name: "Giang",
+    accountNumber: 1234567,
+    balance: 2000.00,
+    income: [],
+    expense: [],
+    expenseLimit: 500.00, // Setting a default limit
+    recurringTransactions: [],
+  );
 
   while (true) {
     printMenu();
@@ -111,7 +113,11 @@ void main() {
         String category = stdin.readLineSync()!;
 
         Transaction incomeTransaction = Transaction(
-            amount: incomeAmount, from: from, description: description, category: category);
+          amount: incomeAmount,
+          from: from,
+          description: description,
+          category: category,
+        );
         account1.addIncome(incomeTransaction);
         print("Income added successfully!");
         break;
@@ -128,7 +134,11 @@ void main() {
         String category = stdin.readLineSync()!;
 
         Transaction expenseTransaction = Transaction(
-            amount: expenseAmount, to: to, description: description, category: category);
+          amount: expenseAmount,
+          to: to,
+          description: description,
+          category: category,
+        );
         try {
           account1.addExpense(expenseTransaction);
           print("Expense added successfully!");
@@ -157,9 +167,10 @@ void main() {
         print("Enter category for recurring transaction: ");
         String recurringCategory = stdin.readLineSync()!;
         Transaction recurringTransaction = Transaction(
-            amount: recurringAmount,
-            description: 'Recurring Expense',
-            category: recurringCategory);
+          amount: recurringAmount,
+          description: 'Recurring Expense',
+          category: recurringCategory,
+        );
         account1.addRecurringTransaction(recurringTransaction);
         print("Recurring transaction added successfully!");
         break;
