@@ -57,5 +57,15 @@ import 'dart:math';
   } // Closing brace for switch
 } // Closing brace for main */
 
-
-// 2. Loops
+void main(List<String> args) {
+  int input = 100;
+  switch (input) {
+    case <= 35:
+    case <= 50:
+    case <= 75:
+      print('The input is small');
+      break;
+    default:
+      print('The input is big');
+  }
+}

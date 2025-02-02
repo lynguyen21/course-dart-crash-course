@@ -308,6 +308,7 @@ enum Tesla implements Comparable<Tesla> {
 
   @override
   int compareTo(Tesla other) {
-    return year.compareTo(other.year);
+  return year.compareTo(other.year);
   }
 }
+print([...Tesla.values]...sort());
