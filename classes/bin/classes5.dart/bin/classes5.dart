@@ -1,5 +1,7 @@
 // interface class
 //  Interface class is used to defined behaviors (methods) that all of its sub-classes must provide all the implementation.
+// Interface class MUST have body in method
+// Interface class does not allow to extend from a different file, but implement from a different file
 
 // extends allows a class to inherit from one superclass (single inheritance).
 // It inherits both concrete and abstract methods and can override them if needed.
@@ -154,3 +156,6 @@ class IsarStorage implements Storage {
 //     String load(String key) => 'data loaded from $key';
 
     // Where is the save method? You should implement this class!!
+
+// Example 3: interface class requires outside library's sub-classes provide their implementation for all methods defined in the interface
+
