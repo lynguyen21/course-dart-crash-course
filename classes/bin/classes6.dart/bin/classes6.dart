@@ -9,6 +9,8 @@
 // To create a mixin, define a class with the mixin keyword instead of class.
 // Mixins can inherit from other classes, extend other mixins, or implement interfaces.
 
+import 'dart:async';
+
 /// A mixin representing an entity with speed.
 // mixin HasSpeed {
 //   /// The speed of the entity.
@@ -43,23 +45,29 @@
 //   person.jump(speed: 10.0);
 // }
 
-mixin HasSpeed {
-  abstract double speed;
+// Mixins and Function Parameters
+// Mixins can contain methods, fields, and getters/setters, but they cannot have constructors.
+
+/// LoggingMixin does not have a constructor in this example.
+mixin Logging {
+  int _logCount = 0;
+
+  void logMessage(String message) {
+    print('[log $_logCount]: $message');
+    _logCount++;
+  }
+
+  int get logCount => _logCount;
 }
 
-mixin CanJump on HasSpeed {
-  void jump({required double speed}) {
-    print('$runtimeType is jumping at the speed of $speed');
+class MyClass with Logging {
+  void performTask() {
+    logMessage('Performing a task');
   }
 }
 
-class Person with HasSpeed, CanJump {
-  @override
-  double speed;
-  Person() : speed = 0.0;
-}
-
 void main(List<String> args) {
-  Person person = Person();
-  person.jump(speed: 10.1);
+  final myclass = MyClass();
+  myclass.performTask();
+  print('Total logs: ${myclass.logCount}');
 }
