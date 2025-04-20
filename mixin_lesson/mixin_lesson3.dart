@@ -1,3 +1,4 @@
+import 'dart:mirrors';
 /**
  * Mixin allows you to reuse feature of another class without inheritance. It helps a class to reuse features from multiples entities
  * It is used to solve the issue of single inheritance
@@ -27,31 +28,65 @@ mixin Hashable {
 /// hashCode is an integer representation of an object
 /// it must be equivalent with ==; if A == B is true, then A.hashCode == B.hashCode is also true
 /// When we look up an object in Set or Map, we can compute its hash and see if the hash exists in the set or map
-class MyClass with Hashable {
+class HashableStudent with Hashable {
   final int property1;
   final String property2;
 
-  MyClass(this.property1, this.property2);
+  HashableStudent(this.property1, this.property2);
 
   // Override == to compare object content instead of identity
   @override
   bool operator ==(Object other) =>
-      other is MyClass &&
+      other is HashableStudent &&
       property1 == other.property1 &&
       property2 == other.property2;
 }
 
+/// Mixin for toString
+///
+mixin HasDescription {
+  @override
+  String toString() {
+    final reflection = reflect(this);
+    final thisType = MirrorSystem.getName(reflection.type.simpleName);
+
+    final variables =
+        reflection.type.declarations.values.whereType<VariableMirror>();
+
+    final properties =
+        <String, dynamic>{
+          for (final field in variables)
+            field.asKey: reflection.getField(field.simpleName).reflectee,
+        }.toString();
+
+    return '$thisType = $properties';
+  }
+}
+
+/// The 'AsKey' extension adds a 'asKey' getter to the 'VariableMirror' class.
+/// It retrieves the field name and type using reflection and formats them as a string.
+extension AsKey on VariableMirror {
+  String get asKey {
+    final fieldName = MirrorSystem.getName(simpleName);
+    final fieldType = MirrorSystem.getName(type.simpleName);
+    return '$fieldName ($fieldType)';
+  }
+}
+
 void main() {
-  final obj1 = MyClass(10, 'Hello');
-  final obj2 = MyClass(10, 'Hello');
+  print('mixin used in hashCode');
+  final obj1 = HashableStudent(10, 'Hello');
+  final obj2 = HashableStudent(10, 'Hello');
 
   print(obj1.hashCode); // Same hash code
   print(obj2.hashCode); // Same hash code
   print(obj1 == obj2); // true
 
-  final set = <MyClass>{};
+  final set = <HashableStudent>{};
   set.add(obj1);
   set.add(obj2);
 
   print(set.length); // Output: 1 (corrected!)
+  print('===\n');
+  print('mixin used in toString()');
 }
