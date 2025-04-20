@@ -15,7 +15,10 @@ mixin Hashable {
     // Calculate the hash code based on the object's properties
     // in this example, the object has property1 and property2
     // we calculate the total hashcode of it based on property1 and property2 hashcode
+    // every object has a default hashcode value based on its default hashcode implementation
     int hash = 17;
+    print('propety1 hashcode: ${property1.hashCode}');
+    print('propety2 hashcode: ${property2.hashCode}');
     hash = 31 * hash + property1.hashCode;
     hash = 31 * hash + property2.hashCode;
     return hash;
@@ -28,6 +31,7 @@ mixin Hashable {
 /// hashCode is an integer representation of an object
 /// it must be equivalent with ==; if A == B is true, then A.hashCode == B.hashCode is also true
 /// When we look up an object in Set or Map, we can compute its hash and see if the hash exists in the set or map
+/// if we do not
 class HashableStudent with Hashable {
   final int property1;
   final String property2;
@@ -73,6 +77,36 @@ extension AsKey on VariableMirror {
   }
 }
 
+/// The 'Person' class represents a person and includes the 'HasDescription' mixin.
+/// It has 'name' and 'age' fields, and a constructor to set their values.
+class HasDesriptionPerson with HasDescription {
+  final String name;
+  final int age;
+
+  const HasDesriptionPerson({required this.name, required this.age});
+}
+
+class HasDescriptionHouse with HasDescription {
+  final String address;
+  final int rooms;
+
+  const HasDescriptionHouse({required this.address, required this.rooms});
+}
+
+class Person {
+  final String name;
+  final int age;
+
+  const Person({required this.name, required this.age});
+}
+
+class House {
+  final String address;
+  final int rooms;
+
+  const House({required this.address, required this.rooms});
+}
+
 void main() {
   print('mixin used in hashCode');
   final obj1 = HashableStudent(10, 'Hello');
@@ -89,4 +123,21 @@ void main() {
   print(set.length); // Output: 1 (corrected!)
   print('===\n');
   print('mixin used in toString()');
+
+  final personHasDescription = HasDesriptionPerson(name: 'John', age: 30);
+  print(personHasDescription);
+  // print Person = {name (String): John, age (int): 30}
+
+  final person = Person(name: 'John', age: 30);
+  print(person);
+  // print Person = {name (String): John, age (int): 30}
+
+  final houseHasDescription = HasDescriptionHouse(
+    address: '123 Main St',
+    rooms: 6,
+  );
+  print(houseHasDescription);
+
+  final house = House(address: '123 Main St', rooms: 6);
+  print(house);
 }
