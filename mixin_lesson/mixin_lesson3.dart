@@ -1,9 +1,15 @@
+import 'dart:math';
 import 'dart:mirrors';
 /**
  * Mixin allows you to reuse feature of another class without inheritance. It helps a class to reuse features from multiples entities
  * It is used to solve the issue of single inheritance
  * 
  */
+
+/// The [Hashable] mixin allows classes to inherit the [hashCode] implementation,
+/// which calculates the hash code based on the object's properties. It is useful
+/// for data structures like `Set` and `Map` that rely on hash codes for efficient
+/// lookups and equality comparisons.
 
 mixin Hashable {
   // we need to define the type of property1 and property2 so any class extending this mixin can reuse the property1 and property2
@@ -16,11 +22,12 @@ mixin Hashable {
     // in this example, the object has property1 and property2
     // we calculate the total hashcode of it based on property1 and property2 hashcode
     // every object has a default hashcode value based on its default hashcode implementation
-    int hash = 17;
+    int temp0 = 17;
     print('propety1 hashcode: ${property1.hashCode}');
     print('propety2 hashcode: ${property2.hashCode}');
-    hash = 31 * hash + property1.hashCode;
-    hash = 31 * hash + property2.hashCode;
+    int temp1 = 31 * temp0 + property1.hashCode;
+    int hash = 3 * temp1 + property2.hashCode;
+
     return hash;
   }
 }
@@ -48,19 +55,28 @@ class HashableStudent with Hashable {
 
 /// Mixin for toString
 ///
+/// Reflect function will give you an object of type InstanceMirror.
+/// Using this InstanceMirror you can get the name and type declarations of the type which you're reflecting upon
 mixin HasDescription {
   @override
   String toString() {
+    // toString() method to get a string representation of the object.
     final reflection = reflect(this);
+    // Uses the reflect() function from dart:mirrors to create a InstanceMirror of the current object (this).
     final thisType = MirrorSystem.getName(reflection.type.simpleName);
+    // Converts that symbol into a human-readable string
 
     final variables =
         reflection.type.declarations.values.whereType<VariableMirror>();
+    // whereType: Filters the list and keeps only variables
 
     final properties =
         <String, dynamic>{
           for (final field in variables)
-            field.asKey: reflection.getField(field.simpleName).reflectee,
+            field.asKey:
+                reflection
+                    .getField(field.simpleName)
+                    .reflectee, // reflectee: gets the actual value
         }.toString();
 
     return '$thisType = $properties';
@@ -121,6 +137,7 @@ void main() {
   set.add(obj2);
 
   print(set.length); // Output: 1 (corrected!)
+
   print('===\n');
   print('mixin used in toString()');
 
