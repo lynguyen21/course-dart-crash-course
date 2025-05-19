@@ -1,15 +1,14 @@
-name: macros_experiment
-description: A sample command-line application.
+name: transactions_tracker
+description: A transaction tracking application with import/export capabilities.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
 
 environment:
   sdk: ^3.7.0-274.0.dev
 
-# Add regular dependencies here.
 dependencies:
+  csv: ^5.0.3
+  excel: ^2.0.0
   json: ^0.20.4
-  # path: ^1.8.0
 
 dev_dependencies:
   lints: ^5.0.0
