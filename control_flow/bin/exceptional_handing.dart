@@ -45,22 +45,20 @@ finally: Executes code after try and catch, regardless of whether an exception w
 } */
 
 // Multiple Catch Blocks
-void main() {
-  List<int> numbers = [1, 2, 3];
-
-  try {
-    int result = int.parse("not_a_number"); // Throws FormatException
-    print(result);
-    // print(numbers[i]); // Out of bounds, throws RangeError
-  } on RangeError {
-    print("Error: Index out of range.");
-  } catch (e) {
-    print("An unknown error occurred: $e");
-  } finally {
-    print("Operation completed.");
-  }
-}
-
+// void main() {
+//   try {
+//     String result = ("not_a_number"); // Throws FormatException
+//     print(result);
+//     // List<int> numbers = [1, 2, 3];
+//     // print(numbers[0]); // Uncomment to test RangeError
+//   } on RangeError {
+//     print("Error: Index out of range.");
+//   } catch (e) {
+//     print("An unknown error occurred: $e");
+//   } finally {
+//     print("Operation completed.");
+//   }
+// }
 // Handling format exception
 /* void main() {
   String invalidNumber = "abc";
@@ -75,3 +73,28 @@ void main() {
   }
 }
  */
+
+void checkAge(int age) {
+  if (age < 18) {
+    throw Exception("Age must be 18 or older.");
+  }
+  print("Access granted.");
+}
+
+void main() {
+  try {
+    checkAge(16); // This will throw an exception
+  } catch (e) {
+    print("Caught an exception: $e");
+  } finally {
+    print("Check completed.");
+  }
+}
+
+// throw manually raises an Exception inside checkAge(). throw in void ()
+
+// try attempts to run it.
+
+// catch handles the exception.
+
+// finally runs no matter what (cleanup, logging, etc.).
