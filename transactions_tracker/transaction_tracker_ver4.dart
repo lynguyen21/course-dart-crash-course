@@ -18,6 +18,7 @@ enum Category {
 }
 
 mixin ImportMixin {
+  // import transactions from a CSV string and automatically classify them as income or expense based on the amount.
   void importFromCSV(String csvData) {
     final csvTable = const CsvToListConverter().convert(csvData);
     for (var row in csvTable.skip(1)) {
@@ -44,6 +45,7 @@ mixin ImportMixin {
 }
 
 mixin ExportMixin {
+  //  export all transactions in an Account object to a CSV string, with headers and cleaned-up formatting.
   String exportToCSV() {
     final transactions = (this as Account).getAllTransactions();
     final csvData = List<List<dynamic>>.from([
@@ -96,6 +98,7 @@ class Account with ImportMixin, ExportMixin {
   List<Transaction> expenses;
   List<Transaction> recurringTransactions;
 
+  /**constructor: the name of the method is the same as the name of the class */
   Account({
     this.name = 'Unnamed Account',
     this.accountNumber = 0,
