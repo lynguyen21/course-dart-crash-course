@@ -1,0 +1,92 @@
+graph TD
+    A[Main Function] --> B[Create Account Instance]
+    B --> C[Display Menu Loop]
+    
+    C --> D{Menu Options}
+    
+    D --> E[Income & Expense]
+    D --> F[Balance & History]
+    D --> G[Transaction Management]
+    D --> H[Data Import/Export]
+    D --> I[Exit Program]
+    
+    E --> E1[1. Add Income]
+    E --> E2[2. Add Expense]
+    E --> E3[4. Add Recurring Transaction]
+    E --> E4[5. Process Recurring Transactions]
+    
+    F --> F1[3. Show Balance]
+    F --> F2[6. View Transaction History]
+    F --> F3[9. Account Summary]
+    F --> F4[10. Category Summary]
+    
+    G --> G1[7. Filter by Category]
+    G --> G2[8. Delete Transaction]
+    
+    H --> H1[11. Import CSV]
+    H --> H2[12. Export CSV]
+    
+    I --> I1[13. Exit]
+    
+    J[Account Class<br/>with Mixins] --> K[Core Properties]
+    J --> L[Core Methods]
+    J --> M[Import/Export Mixins]
+    
+    K --> K1[name<br/>accountNumber<br/>balance]
+    K --> K2[income: List&lt;Transaction&gt;<br/>expenses: List&lt;Transaction&gt;<br/>recurringTransactions: List&lt;Transaction&gt;]
+    
+    L --> L1[addIncome/addExpense<br/>getBalance<br/>getAllTransactions]
+    L --> L2[filterTransactionsByCategory<br/>getCategorySummary<br/>getTransactionsByDate]
+    L --> L3[deleteTransactionByDateAndIndex<br/>addRecurringTransaction<br/>processRecurringTransactions]
+    
+    M --> M1[ImportMixin<br/>importFromCSV]
+    M --> M2[ExportMixin<br/>exportToCSV]
+    
+    N[Transaction Class] --> O[Properties]
+    O --> O1[date: DateTime<br/>amount: double<br/>from/to: String]
+    O --> O2[description: String<br/>category: Category]
+    
+    P[Category Enum] --> Q[12 Categories]
+    Q --> Q1[food, gas, housing<br/>tuition, market<br/>electricity_bill, utilities]
+    Q --> Q2[restaurant, insurance<br/>salary, game, other]
+    
+    R[Helper Functions] --> S[User Interface]
+    R --> T[Data Processing]
+    
+    S --> S1[printMenu<br/>printCategory]
+    T --> T1[mapIntToCategory<br/>importTransactions<br/>exportTransactions]
+    
+    U[File Operations] --> V[CSV Processing]
+    V --> V1[Read CSV File<br/>Parse with CsvToListConverter]
+    V --> V2[Write CSV File<br/>Format with ListToCsvConverter]
+    
+    E1 --> L1
+    E2 --> L1
+    E3 --> L3
+    E4 --> L3
+    F1 --> L1
+    F2 --> L1
+    F3 --> L1
+    F4 --> L2
+    G1 --> L2
+    G2 --> L3
+    H1 --> M1
+    H2 --> M2
+    
+    L1 --> N
+    L2 --> N
+    L3 --> N
+    M1 --> N
+    M2 --> N
+    
+    N --> P
+    
+    H1 --> U
+    H2 --> U
+    
+    style A fill:#e1f5fe
+    style J fill:#f3e5f5
+    style N fill:#e8f5e8
+    style P fill:#fff3e0
+    style M fill:#fce4ec
+    style U fill:#f1f8e9

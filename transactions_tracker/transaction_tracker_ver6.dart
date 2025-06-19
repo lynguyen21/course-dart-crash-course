@@ -1,4 +1,4 @@
-// Update get transaction
+// Enhanced Financial Management System with Auto-Processing on Startup
 import 'dart:io';
 import 'dart:convert';
 import 'package:csv/csv.dart';
@@ -17,6 +17,9 @@ enum Category {
   game,
   other,
 }
+
+// Enum for recurrence types
+enum RecurrenceType { daily, weekly, monthly, yearly }
 
 mixin ImportMixin {
   // import transactions from a CSV string and automatically classify them as income or expense based on the amount.
@@ -68,6 +71,7 @@ mixin ExportMixin {
   }
 }
 
+// Enhanced Transaction class with recurring features
 class Transaction {
   DateTime date;
   double amount;
@@ -76,6 +80,13 @@ class Transaction {
   String description;
   Category category;
 
+  // New fields for recurring transactions
+  bool isRecurring;
+  RecurrenceType? recurrenceType;
+  int? recurringDay; // Day of month (1-31) or day of week (1-7)
+  DateTime? nextDueDate;
+  DateTime? endDate; // Optional end date for recurring transactions
+
   Transaction({
     DateTime? date,
     this.amount = 0.0,
@@ -83,17 +94,31 @@ class Transaction {
     this.to = 'None',
     this.description = 'None',
     this.category = Category.other,
+    this.isRecurring = false,
+    this.recurrenceType,
+    this.recurringDay,
+    this.nextDueDate,
+    this.endDate,
   }) : date = date ?? DateTime.now();
-  // If date is null, assign it the current time (DateTime.now()).
-  // If date already has a value, keep it.
-  // ! null assertion: “I know it’s not null — treat it as non-null.” If it's null => runtime crash
 
   @override
   String toString() {
-    return 'Date: ${date.toLocal()} | Amount: $amount | From: $from | To: $to | Description: $description | Category: $category';
+    String result =
+        'Date: ${date.toLocal()} | Amount: $amount | From: $from | To: $to | Description: $description | Category: $category';
+    if (isRecurring) {
+      result += ' | Recurring: ${recurrenceType.toString().split('.').last}';
+      if (recurringDay != null) {
+        result += ' on day $recurringDay';
+      }
+      if (nextDueDate != null) {
+        result += ' | Next due: ${nextDueDate!.toLocal()}';
+      }
+    }
+    return result;
   }
 }
 
+// Enhanced Account class with advanced recurring transaction handling
 class Account with ImportMixin, ExportMixin {
   String name;
   int accountNumber;
@@ -102,7 +127,6 @@ class Account with ImportMixin, ExportMixin {
   List<Transaction> expenses;
   List<Transaction> recurringTransactions;
 
-  /**constructor: the name of the method is the same as the name of the class */
   Account({
     this.name = 'Unnamed Account',
     this.accountNumber = 0,
@@ -128,22 +152,165 @@ class Account with ImportMixin, ExportMixin {
     }
   }
 
+  // Enhanced method to add recurring transaction with scheduling
   void addRecurringTransaction(Transaction transaction) {
+    if (!transaction.isRecurring) {
+      throw ArgumentError('Transaction must be marked as recurring');
+    }
+
+    if (transaction.recurrenceType == null) {
+      throw ArgumentError('Recurrence type must be specified');
+    }
+
+    // Calculate next due date if not provided
+    if (transaction.nextDueDate == null) {
+      transaction.nextDueDate = calculateNextDueDate(
+        DateTime.now(),
+        transaction.recurrenceType!,
+        transaction.recurringDay,
+      );
+    }
+
     recurringTransactions.add(transaction);
+    print('Recurring transaction added. Next due: ${transaction.nextDueDate}');
   }
 
-  void processRecurringTransactions() {
-    for (var transaction in recurringTransactions) {
-      addExpense(transaction);
+  // Calculate next due date based on recurrence type and day
+  DateTime calculateNextDueDate(
+    DateTime currentDate,
+    RecurrenceType type,
+    int? day,
+  ) {
+    switch (type) {
+      case RecurrenceType.daily:
+        return currentDate.add(Duration(days: 1));
+
+      case RecurrenceType.weekly:
+        if (day == null || day < 1 || day > 7) {
+          throw ArgumentError(
+            'Weekly recurrence requires day of week (1-7, where 1=Monday)',
+          );
+        }
+        int daysUntilTarget = (day - currentDate.weekday) % 7;
+        if (daysUntilTarget == 0) daysUntilTarget = 7;
+        return currentDate.add(Duration(days: daysUntilTarget));
+
+      case RecurrenceType.monthly:
+        if (day == null || day < 1 || day > 31) {
+          throw ArgumentError(
+            'Monthly recurrence requires day of month (1-31)',
+          );
+        }
+        DateTime nextMonth = DateTime(
+          currentDate.year,
+          currentDate.month + 1,
+          day,
+        );
+        if (nextMonth.month != currentDate.month + 1) {
+          nextMonth = DateTime(currentDate.year, currentDate.month + 2, 0);
+        }
+        return nextMonth;
+
+      case RecurrenceType.yearly:
+        if (day == null) {
+          return DateTime(
+            currentDate.year + 1,
+            currentDate.month,
+            currentDate.day,
+          );
+        }
+        return DateTime(currentDate.year + 1, currentDate.month, day);
     }
+  }
+
+  // Check if a transaction is due
+  bool isTransactionDue(DateTime dueDate, DateTime currentDate) {
+    return dueDate.isBefore(currentDate) ||
+        (dueDate.year == currentDate.year &&
+            dueDate.month == currentDate.month &&
+            dueDate.day == currentDate.day);
+  }
+
+  // Enhanced process recurring transactions with scheduling
+  void processRecurringTransactions() {
+    final today = DateTime.now();
+    int processedCount = 0;
+
+    for (Transaction recurringTransaction in recurringTransactions) {
+      if (recurringTransaction.nextDueDate == null) continue;
+
+      if (isTransactionDue(recurringTransaction.nextDueDate!, today)) {
+        try {
+          Transaction newTransaction = Transaction(
+            date: today,
+            amount: recurringTransaction.amount,
+            from: recurringTransaction.from,
+            to: recurringTransaction.to,
+            description: '${recurringTransaction.description} (Recurring)',
+            category: recurringTransaction.category,
+          );
+
+          if (newTransaction.amount > 0) {
+            addIncome(newTransaction);
+          } else {
+            addExpense(newTransaction);
+          }
+
+          recurringTransaction.nextDueDate = calculateNextDueDate(
+            today,
+            recurringTransaction.recurrenceType!,
+            recurringTransaction.recurringDay,
+          );
+
+          processedCount++;
+          print(
+            'Processed recurring transaction: ${recurringTransaction.description}',
+          );
+          print('Next due date: ${recurringTransaction.nextDueDate}');
+        } catch (e) {
+          print(
+            'Failed to process recurring transaction: ${recurringTransaction.description}',
+          );
+          print('Error: $e');
+        }
+      }
+    }
+
+    if (processedCount == 0) {
+      print('No recurring transactions due today.');
+    } else {
+      print('Processed $processedCount recurring transactions.');
+    }
+  }
+
+  // Get upcoming recurring transactions
+  List<Transaction> getUpcomingRecurringTransactions([int days = 30]) {
+    final cutoffDate = DateTime.now().add(Duration(days: days));
+    final upcoming = <Transaction>[];
+
+    for (Transaction transaction in recurringTransactions) {
+      if (transaction.nextDueDate != null &&
+          transaction.nextDueDate!.isBefore(cutoffDate)) {
+        upcoming.add(transaction);
+      }
+    }
+
+    upcoming.sort((a, b) => a.nextDueDate!.compareTo(b.nextDueDate!));
+    return upcoming;
+  }
+
+  // Remove recurring transaction
+  bool removeRecurringTransaction(int index) {
+    if (index < 0 || index >= recurringTransactions.length) {
+      return false;
+    }
+    recurringTransactions.removeAt(index);
+    return true;
   }
 
   double getBalance() => balance;
 
-  List<Transaction> getAllTransactions() => [
-    ...income,
-    ...expenses,
-  ]; // [...] spear operator: Spreads the elements from both lists into the new list.
+  List<Transaction> getAllTransactions() => [...income, ...expenses];
 
   List<Transaction> filterTransactionsByCategory(Category category) {
     return getAllTransactions()
@@ -174,7 +341,7 @@ class Account with ImportMixin, ExportMixin {
   bool deleteTransactionByDateAndIndex(DateTime date, int index) {
     final transactionsOnDate = getTransactionsByDate(date);
     if (index < 0 || index >= transactionsOnDate.length) return false;
-    // index refers to the position of a transaction within the list of transactions that occurred on a specific date.
+
     final transactionToRemove = transactionsOnDate[index];
 
     if (income.contains(transactionToRemove)) {
@@ -193,11 +360,12 @@ class Account with ImportMixin, ExportMixin {
     print('Total Income: ${income.fold(0.0, (sum, t) => sum + t.amount)}');
     print('Total Expenses: ${expenses.fold(0.0, (sum, t) => sum + t.amount)}');
     print('Balance: $balance');
+    print('Active Recurring Transactions: ${recurringTransactions.length}');
   }
 }
 
 void printCategory() {
-  print('Select category');
+  print('Categories');
   print('1. food');
   print('2. gas');
   print('3. housing');
@@ -211,20 +379,30 @@ void printCategory() {
   print('11. game');
 }
 
+// Updated menu without option 5 (since processing is automatic)
 void printMenu() {
   print('1. Enter income');
   print('2. Enter expense');
   print('3. Show balance');
   print('4. Add recurring transaction');
-  print('5. Process recurring transactions');
-  print('6. View transaction history');
-  print('7. Filter transactions by category');
-  print('8. Delete a transaction');
-  print('9. View account summary');
-  print('10. View category summary');
-  print('11. Import transactions');
-  print('12. Export transactions');
-  print('13. Exit');
+  print('5. View transaction history');
+  print('6. Filter transactions by category');
+  print('7. Delete a transaction');
+  print('8. View account summary');
+  print('9. View category summary');
+  print('10. Import transactions');
+  print('11. Export transactions');
+  print('12. View recurring transactions');
+  print('13. Remove recurring transaction');
+  print('14. Exit');
+}
+
+void printRecurrenceMenu() {
+  print('Recurrence types:');
+  print('1. Daily');
+  print('2. Weekly');
+  print('3. Monthly');
+  print('4. Yearly');
 }
 
 Category mapIntToCategory(int categorynumber) {
@@ -266,8 +444,136 @@ Category mapIntToCategory(int categorynumber) {
     default:
       categoryEnum = Category.other;
   }
-
   return categoryEnum;
+}
+
+RecurrenceType mapIntToRecurrenceType(int type) {
+  switch (type) {
+    case 1:
+      return RecurrenceType.daily;
+    case 2:
+      return RecurrenceType.weekly;
+    case 3:
+      return RecurrenceType.monthly;
+    case 4:
+      return RecurrenceType.yearly;
+    default:
+      return RecurrenceType.monthly;
+  }
+}
+
+// Enhanced function to add recurring transaction with user input
+void addRecurringTransactionInteractive(Account account) {
+  try {
+    stdout.write("Enter recurring transaction amount: ");
+    final amount = double.parse(stdin.readLineSync()!);
+
+    stdout.write("Enter description: ");
+    final description = stdin.readLineSync()!;
+
+    stdout.write("Enter receiver: ");
+    final fromTo = stdin.readLineSync()!;
+
+    print("Select category:");
+    printCategory();
+    final categoryIndex = int.parse(stdin.readLineSync()!);
+    final category = mapIntToCategory(categoryIndex);
+
+    print("Select recurrence type:");
+    printRecurrenceMenu();
+    final recurrenceIndex = int.parse(stdin.readLineSync()!);
+    final recurrenceType = mapIntToRecurrenceType(recurrenceIndex);
+
+    int? recurringDay;
+
+    switch (recurrenceType) {
+      case RecurrenceType.weekly:
+        stdout.write(
+          "Enter day of week (1=Monday, 2=Tuesday, ..., 7=Sunday): ",
+        );
+        recurringDay = int.parse(stdin.readLineSync()!);
+        if (recurringDay < 1 || recurringDay > 7) {
+          throw ArgumentError('Day of week must be between 1 and 7');
+        }
+        break;
+
+      case RecurrenceType.monthly:
+        stdout.write("Enter day of month (1-31): ");
+        recurringDay = int.parse(stdin.readLineSync()!);
+        if (recurringDay < 1 || recurringDay > 31) {
+          throw ArgumentError('Day of month must be between 1 and 31');
+        }
+        break;
+
+      case RecurrenceType.yearly:
+        stdout.write("Enter day of month for yearly recurrence (1-31): ");
+        recurringDay = int.parse(stdin.readLineSync()!);
+        break;
+
+      case RecurrenceType.daily:
+        break;
+    }
+
+    final transaction = Transaction(
+      amount: amount,
+      from: amount > 0 ? fromTo : 'Self',
+      to: amount > 0 ? 'Self' : fromTo,
+      description: description,
+      category: category,
+      isRecurring: true,
+      recurrenceType: recurrenceType,
+      recurringDay: recurringDay,
+    );
+
+    account.addRecurringTransaction(transaction);
+    print("Recurring transaction added successfully!");
+  } catch (e) {
+    print("Error adding recurring transaction: $e");
+  }
+}
+
+// Function to view recurring transactions
+void viewRecurringTransactions(Account account) {
+  if (account.recurringTransactions.isEmpty) {
+    print("No recurring transactions found.");
+    return;
+  }
+
+  print("Active Recurring Transactions:");
+  for (int i = 0; i < account.recurringTransactions.length; i++) {
+    print("[$i] ${account.recurringTransactions[i]}");
+  }
+
+  print("\nUpcoming in next 30 days:");
+  final upcoming = account.getUpcomingRecurringTransactions();
+  for (Transaction transaction in upcoming) {
+    print("${transaction.description} - Due: ${transaction.nextDueDate}");
+  }
+}
+
+// Function to remove recurring transaction
+void removeRecurringTransactionInteractive(Account account) {
+  if (account.recurringTransactions.isEmpty) {
+    print("No recurring transactions to remove.");
+    return;
+  }
+
+  print("Active Recurring Transactions:");
+  for (int i = 0; i < account.recurringTransactions.length; i++) {
+    print("[$i] ${account.recurringTransactions[i]}");
+  }
+
+  stdout.write("Enter the index of the recurring transaction to remove: ");
+  try {
+    final index = int.parse(stdin.readLineSync()!);
+    if (account.removeRecurringTransaction(index)) {
+      print("Recurring transaction removed successfully!");
+    } else {
+      print("Invalid index!");
+    }
+  } catch (e) {
+    print("Invalid input!");
+  }
 }
 
 void importTransactions(Account account) {
@@ -294,12 +600,18 @@ void exportTransactions(Account account) {
   }
 }
 
+// MAIN FUNCTION WITH AUTO-PROCESSING ON STARTUP
 void main() {
   final account = Account(
     name: "Giang",
     accountNumber: 1234567,
     balance: 2000.00,
   );
+
+  // AUTOMATICALLY PROCESS RECURRING TRANSACTIONS ON STARTUP
+  print("Checking and processing due recurring transactions...");
+  account.processRecurringTransactions();
+  print("Auto-processing complete.\n");
 
   while (true) {
     printMenu();
@@ -326,7 +638,6 @@ void main() {
             category: categoryEnum,
           ),
         );
-
         print("Income added successfully!");
         break;
 
@@ -351,7 +662,6 @@ void main() {
               category: categoryEnum,
             ),
           );
-
           print("Expense added successfully!");
         } catch (e) {
           print(e);
@@ -363,36 +673,17 @@ void main() {
         break;
 
       case "4":
-        stdout.write("Enter recurring transaction amount: ");
-        final recurringAmount = double.parse(stdin.readLineSync()!);
-        stdout.write("Enter category for recurring transaction: ");
-        final recurringCategory = int.parse(stdin.readLineSync()!);
-        Category categoryEnum = mapIntToCategory(recurringCategory);
-
-        account.addRecurringTransaction(
-          Transaction(
-            amount: recurringAmount,
-            description: 'Recurring Expense',
-            category: categoryEnum,
-          ),
-        );
-
-        print("Recurring transaction added successfully!");
+        addRecurringTransactionInteractive(account);
         break;
 
       case "5":
-        account.processRecurringTransactions();
-        print("Recurring transactions processed.");
-        break;
-
-      case "6":
         print("Transaction History:");
         for (var transaction in account.getAllTransactions()) {
           print(transaction);
         }
         break;
 
-      case "7":
+      case "6":
         stdout.write("Enter category to filter: ");
         printCategory();
         final category = int.parse(stdin.readLineSync()!);
@@ -408,7 +699,7 @@ void main() {
         }
         break;
 
-      case "8":
+      case "7":
         stdout.write("Enter transaction date (yyyy-MM-dd): ");
         final input = stdin.readLineSync()!;
         DateTime date;
@@ -450,11 +741,11 @@ void main() {
         }
         break;
 
-      case "9":
+      case "8":
         account.printSummary();
         break;
 
-      case "10":
+      case "9":
         print("Category Summary:");
         final categorySummary = account.getCategorySummary();
 
@@ -463,15 +754,23 @@ void main() {
         });
         break;
 
-      case "11":
+      case "10":
         importTransactions(account);
         break;
 
-      case "12":
+      case "11":
         exportTransactions(account);
         break;
 
+      case "12":
+        viewRecurringTransactions(account);
+        break;
+
       case "13":
+        removeRecurringTransactionInteractive(account);
+        break;
+
+      case "14":
         print("Exiting the program.");
         return;
 
