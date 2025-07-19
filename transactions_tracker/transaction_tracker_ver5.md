@@ -232,6 +232,23 @@ switch (option) {
         print("Invalid option, please try again.");
 }
 ```
+`Switch` for recurrence types
+
+```
+    switch (type) {
+      case RecurrenceType.daily:
+      ...
+      case RecurrenceType.weekly:
+      ...
+
+      case RecurrenceType.monthly:
+      ...
+
+      case RecurrenceType.yearly:
+      ...
+    }
+  }
+```
 **4. Exception Handling**
 
 **Reason for usage:** `try-catch` blocks and `throw Exception()` are used for insufficient balance protection, CSV import/export error handling
